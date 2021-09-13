@@ -67,7 +67,7 @@ export class OrderDeliveryComponent implements OnInit, OnDestroy, AfterContentIn
   }
 
   ngAfterContentInit() {
-    this.initialize();
+    //this.initialize();
   }
 
   generateData() {

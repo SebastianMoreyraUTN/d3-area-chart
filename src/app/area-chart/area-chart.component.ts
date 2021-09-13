@@ -8,12 +8,13 @@ import * as d3 from 'd3';
     templateUrl: './area-chart.component.html',
     styleUrls: ['./area-chart.component.scss']
 })
+
 export class AreaChartComponent implements OnInit, OnChanges {
     @Input() transitionTime = 1000;
-    @Input() xmax = 45;
-    @Input() ymax = 200;
+    @Input() xmax = 5;
+    @Input() ymax = 40000;
     @Input() hticks = 60;
-    @Input() data: number[];
+    @Input() data: any[];
     @Input() showLabel = 1;
     hostElement; // Native element hosting the SVG container
     svg; // Top level SVG element
@@ -32,16 +33,19 @@ export class AreaChartComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
+      this.data = [NEW, STRIPPED, PROCESSED];
+      this.updateChart(this.data);
     }
 
     ngOnChanges(changes: SimpleChanges) {
+      this.updateChart(this.data)
         if (changes.data) {
             this.updateChart(changes.data.currentValue);
         }
     }
 
     private createChart(data: number[]) {
-
+ 
         this.removeExistingChartFromParent();
 
         this.setChartDimensions();
@@ -56,29 +60,30 @@ export class AreaChartComponent implements OnInit, OnChanges {
 
         // d3 area and histogram functions  has to be declared after x and y functions are defined
         this.area = d3.area()
-            .x((datum: any) => this.x(d3.mean([datum.x1, datum.x2])))
+            .x((datum: any) => this.x(datum.x))
+
             .y0(this.y(0))
-            .y1((datum: any) => this.y(datum.length));
+            .y1((datum: any) => this.y(datum.y));
 
 
-        this.histogram = d3.histogram()
-            .value((datum) => datum)
-            .domain([0, this.xmax])
-            .thresholds(this.x.ticks(this.hticks));
-
+        //this.histogram = d3.histogram()
+        //    .value((datum) => datum)
+        //    .domain([0, this.xmax])
+        //    .thresholds(this.x.ticks(this.hticks));
+        //  
         // data has to be processed after area and histogram functions are defined
-        this.processData(data);
+        //this.processData(data);
 
         this.createAreaCharts();
 
     }
 
-    private processData(data) {
-        this.bins = [];
-        data.forEach((row) => {
-            this.bins.push(this.histogram(row))
-        });
-    }
+    //private processData(data) {
+    //    this.bins = [];
+    //    data.forEach((row) => {
+    //        this.bins.push(this.histogram(row))
+    //    });
+    //}
 
     private setChartDimensions() {
         let viewBoxHeight = 100;
@@ -101,9 +106,11 @@ export class AreaChartComponent implements OnInit, OnChanges {
     }
 
     private createXAxis() {
-        this.x = d3.scaleLinear()
-            .domain([0, this.xmax])
-            .range([30, 170]);
+        this.x = d3.scaleTime()
+            .domain(d3.extent(this.data[0], function(d:any) { 
+              return d.x; 
+            }))
+            .range([30, 170])
         this.g.append('g')
             .attr('transform', 'translate(0,90)')
             .attr("stroke-width", 0.5)
@@ -111,10 +118,10 @@ export class AreaChartComponent implements OnInit, OnChanges {
 
         this.g.append('g')
             .attr('transform', 'translate(0,90)')
-            .style('font-size', '6')
+            .style('font-size', '3')
             .style("stroke-dasharray", ("1,1"))
             .attr("stroke-width", 0.1)
-            .call(d3.axisBottom(this.x).ticks(10).tickSize(-80));
+            .call(d3.axisBottom(this.x).ticks(d3.timeDay.every(1)).tickSize(-80));
 
     }
 
@@ -143,13 +150,15 @@ export class AreaChartComponent implements OnInit, OnChanges {
     }
     private createAreaCharts() {
         this.paths = [];
-        this.bins.forEach((row, index) => {
+        this.data.forEach((row, index) => {
             this.paths.push(this.g.append('path')
                 .datum(row)
                 .attr('fill', this.colorScale('' + index))
                 .attr("stroke-width", 0.1)
                 .attr('opacity', 0.5)
                 .attr('d', (datum: any) => this.area(datum))
+                //move paths 0.5px to right in order to avoid x-axis overlapping
+                .style('transform', 'translate(0.5px, 0px)')
             );
         });
     }
@@ -160,7 +169,7 @@ export class AreaChartComponent implements OnInit, OnChanges {
             return;
         }
 
-        this.processData(data);
+        //this.processData(data);
 
         this.updateAreaCharts();
 
@@ -168,12 +177,12 @@ export class AreaChartComponent implements OnInit, OnChanges {
 
     private updateAreaCharts() {
         this.paths.forEach((path, index) => {
-            path.datum(this.bins[index])
+            path.datum(this.data[index])
                 .transition().duration(this.transitionTime)
                 .attr('d', d3.area()
-                    .x((datum: any) => this.x(d3.mean([datum.x1, datum.x2])))
+                    .x((datum: any) => this.x(datum.x))
                     .y0(this.y(0))
-                    .y1((datum: any) => this.y(datum.length)));
+                    .y1((datum: any) => this.y(datum.y)));
 
         });
     }
@@ -187,3 +196,96 @@ export class AreaChartComponent implements OnInit, OnChanges {
     }
 }
 
+const NEW = [
+    {
+      y: 35019,
+      x: new Date("2021-09-13 00:00:00")
+    },
+    {
+      y: 14672,
+      x: new Date("2021-09-14 00:00:00")
+    },
+    {
+      y: 39409,
+      x: new Date("2021-09-15 00:00:00")
+    },
+    {
+      y: 20795,
+      x: new Date("2021-09-16 00:00:00")
+    },
+    {
+      y: 14401,
+      x: new Date("2021-09-17 00:00:00")
+    },
+    {
+      y: 32401,
+      x: new Date("2021-09-18 00:00:00")
+    },
+    {
+      y: 14401,
+      x: new Date("2021-09-19 00:00:00")
+    },
+  ]
+  
+  const PROCESSED = [
+    {
+      y: 36210,
+      x: new Date("2021-09-13 00:00:00")
+    },
+    {
+      y: 10583,
+      x: new Date("2021-09-14 00:00:00")
+    },
+    {
+      y: 30013,
+      x: new Date("2021-09-15 00:00:00")
+    },
+    {
+      y: 33180,
+      x: new Date("2021-09-16 00:00:00")
+    },
+    {
+      y: 19960,
+      x: new Date("2021-09-17 00:00:00")
+    },
+    {
+      y: 12960,
+      x: new Date("2021-09-18 00:00:00")
+    },
+    {
+      y: 19960,
+      x: new Date("2021-09-19 00:00:00")
+    },
+  ]
+  
+  const STRIPPED = [
+    {
+      y: 38110,
+      x: new Date("2021-09-13 00:00:00")
+    },
+    {
+      y: 19053,
+      x: new Date("2021-09-14 00:00:00")
+    },
+    {
+      y: 29335,
+      x: new Date("2021-09-15 00:00:00")
+    },
+    {
+      y: 34535,
+      x: new Date("2021-09-16 00:00:00")
+    },
+    {
+      y: 8158,
+      x: new Date("2021-09-17 00:00:00")
+    },
+    {
+      y: 4158,
+      x: new Date("2021-09-18 00:00:00")
+    },
+    {
+      y: 23158,
+      x: new Date("2021-09-19 00:00:00")
+    },
+  
+  ]

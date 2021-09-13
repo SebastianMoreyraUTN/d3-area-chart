@@ -6,8 +6,8 @@
     </mat-card-title>
     <mat-card-content id="delivery" #delivery>
         <div id="chartAndDataContainer">
-            <div id="chartContainer" [ngClass]="{'half': chartControlsService.showData}">
-                <app-area-chart #areaChart [data]="chartData"></app-area-chart>
+            <div id="chartContainer">
+                <app-area-chart #areaChart></app-area-chart>
             </div>
             <div id="deliveryTable"  *ngIf="chartControlsService.showData">
                 <table mat-table [dataSource]="deliveryMetrics"
