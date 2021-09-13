@@ -137,15 +137,15 @@ export class AreaChartComponent implements OnInit, OnChanges {
             .attr('transform', 'translate(30,0)')
             .style("stroke-dasharray", ("1,1"))
             .attr("stroke-width", 0.1)
-            .call(d3.axisLeft(this.y).ticks(4).tickSize(-140))
-            .style('font-size', '6');
+            .call(d3.axisLeft(this.y).ticks(4).tickSize(-140).tickFormat(d3.format(".2s")))
+            .style('font-size', '3');
 
         if (this.showLabel === 1) {
             this.g.append('text')
             .attr('text-anchor', 'middle')
             .attr('transform', 'translate(10,50) rotate(-90)')
-            .style('font-size', 8)
-            .text('Frequency');
+            .style('font-size', 4)
+            .text('Files');
         }
     }
     private createAreaCharts() {
