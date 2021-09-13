@@ -1,6 +1,6 @@
 import { Component, OnInit, ElementRef, ViewEncapsulation, Input, SimpleChanges, OnChanges } from '@angular/core';
 
-import * as d3 from 'd3';
+import * as d3 from 'd3/index';
 
 @Component({
   selector: 'app-area-chart',
@@ -26,6 +26,7 @@ export class AreaChartComponent implements OnInit {
     area; // For D3 area function
     histogram; // For D3 histogram function
     configuration:string = 'day'
+    tipBoxRect: any;
 
     constructor(private elRef: ElementRef) {
         this.hostElement = this.elRef.nativeElement;
@@ -48,7 +49,7 @@ export class AreaChartComponent implements OnInit {
         this.createXAxis();
 
         this.createYAxis();
-        console.log( "Y0", this.y(0))
+
         this.area = d3.area()
             .x((datum: any) => this.x(datum.x))
             .y0(this.y(0))
@@ -57,13 +58,28 @@ export class AreaChartComponent implements OnInit {
 
         this.createAreaCharts();
 
-        this.svg.append('rect')
+        this.tipBoxRect = this.g.append('rect')
         .attr('id', 'rect-test')
-        .attr('width', 200)
-        .attr('height', 100)
+        .attr('transform', 'translate(30.5,10)')
+        .attr('width', 140)
+        .attr('height', 80)
         .style('opacity', 0)
+
+        this.tipBoxRect
+          .on('mousemove', this.drawTooltip)
+          //.on('mouseout', this.removeTooltip());
         
       }
+
+    drawTooltip() {
+      console.log(this.x)
+      const year = Math.floor((this.x.invert(d3.mouse(d3.select('#rect-test' as any).node())[0]) + 5) / 10) * 10;
+      console.log(year);
+    }
+
+    removeTooltip() {
+
+    }
 
     private setChartDimensions() {
         let viewBoxHeight = 100;
@@ -138,7 +154,7 @@ export class AreaChartComponent implements OnInit {
                 .attr('fill', this.colorScale('' + index))
                 .attr("stroke-width", 0.1)
                 .attr('opacity', 0.5)
-                .attr('d', (datum: any) => this.area(datum))
+                .attr('d', (d: any) => this.area(d))
                 //move paths 0.5px to right in order to avoid x-axis overlapping
                 .style('transform', 'translate(0.5px, 0px)')
                 .on('mouseover', (d: any, i: any, n: any,z:any,y:any) => {console.log("MOUSEOVER",z,y)})
