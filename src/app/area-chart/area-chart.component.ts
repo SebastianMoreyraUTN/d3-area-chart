@@ -27,6 +27,8 @@ export class AreaChartComponent implements OnInit {
     histogram; // For D3 histogram function
     configuration:string = 'day'
     tipBoxRect: any;
+    tooltip: any;
+    tooltipLine: any;
 
     constructor(private elRef: ElementRef) {
         this.hostElement = this.elRef.nativeElement;
@@ -37,7 +39,7 @@ export class AreaChartComponent implements OnInit {
       this.updateChart(this.data);
     }
 
-    private createChart(data: number[]) {
+    createChart(data: number[]) {
         this.removeExistingChartFromParent();
 
         this.setChartDimensions();
@@ -58,6 +60,9 @@ export class AreaChartComponent implements OnInit {
 
         this.createAreaCharts();
 
+        this.tooltip = d3.select('#tooltip');
+        this.tooltipLine = this.g.append('line');
+
         this.tipBoxRect = this.g.append('rect')
         .attr('id', 'rect-test')
         .attr('transform', 'translate(30.5,10)')
@@ -66,16 +71,44 @@ export class AreaChartComponent implements OnInit {
         .style('opacity', 0)
 
         this.tipBoxRect
-          .on('mousemove', this.drawTooltip)
-          //.on('mouseout', this.removeTooltip());
+          .on('mousemove', () => {
+            let date = (this.x.invert(d3.mouse(d3.select('#rect-test' as any).node())[0])) as Date;
+            date.setDate(date.getDate() + 1)
+            date.setHours(date.getHours() + 12)
+            let rows = []
+            this.data.forEach((element:any[]) => {
+              rows.push(...element.filter((value) => value.x.getDate() == date.getDate() && value.x.getMonth() == date.getMonth()))
+            });
+
+
+          this.tooltipLine.attr('stroke', 'black')
+          .attr('x1', this.x(rows[0].x))
+          .attr('x2', this.x(rows[0].x))
+          .attr('y1', 10)
+          .attr('y2', 90);
+          
+          this.tooltip.html('Test Records')
+            .style('display', 'block')
+            .style('left', d3.event.pageX + 20)
+            .style('top', d3.event.pageY - 20)
+            .selectAll()
+            .data(rows).enter()
+            .append('div')
+            .style('color', d => d.color)
+            .html(d => `${d.x.getDate()}-${d.x.getMonth()+1}` + ': ' + d.y);
+
+            console.log(d3.event.pageX, d3.event.pageY )
+          })
+
+          
+        
+       
+          .on('mouseout', () => {
+            if (this.tooltip) this.tooltip.style('display', 'none');
+            if (this.tooltipLine) this.tooltipLine.attr('stroke', 'none');
+          });
         
       }
-
-    drawTooltip() {
-      console.log(this.x)
-      const year = Math.floor((this.x.invert(d3.mouse(d3.select('#rect-test' as any).node())[0]) + 5) / 10) * 10;
-      console.log(year);
-    }
 
     removeTooltip() {
 
@@ -102,7 +135,8 @@ export class AreaChartComponent implements OnInit {
     }
 
     private createXAxis() {
-        this.x = d3.scaleTime()
+        this.x =  
+            d3.scaleTime()
             .domain(d3.extent(this.data[0], (d:any) => { 
               return d.x as Date; 
             }))
@@ -157,7 +191,6 @@ export class AreaChartComponent implements OnInit {
                 .attr('d', (d: any) => this.area(d))
                 //move paths 0.5px to right in order to avoid x-axis overlapping
                 .style('transform', 'translate(0.5px, 0px)')
-                .on('mouseover', (d: any, i: any, n: any,z:any,y:any) => {console.log("MOUSEOVER",z,y)})
             );
         });
     }
